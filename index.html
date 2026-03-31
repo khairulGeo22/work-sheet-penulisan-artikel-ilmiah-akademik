@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Q1 Article Builder | Worksheet + Reviewer Collaboration</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- html2canvas + jspdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fc 0%, #e9eef5 100%);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 2rem 1rem;
+            color: #1a2c3e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        /* header */
+        .hero {
+            background: linear-gradient(105deg, #0f2b3d 0%, #1c4e6c 100%);
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            box-shadow: 0 15px 30px -12px rgba(0,0,0,0.2);
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .hero h1 i {
+            background: #ffb347;
+            padding: 8px 12px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+        }
+
+        .hero p {
+            margin-top: 0.6rem;
+            opacity: 0.9;
+            font-size: 1rem;
+            max-width: 80%;
+        }
+
+        /* layout 2 kolom */
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.8rem;
+        }
+
+        .form-panel {
+            flex: 2;
+            min-width: 300px;
+            background: white;
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .review-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #ffffff;
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .section-card {
+            background: #fefefe;
+            border: 1px solid #eef2f8;
+            border-radius: 1.2rem;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8fafd;
+            padding: 1rem 1.2rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #e4edf5;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header i {
+            color: #1f6e8c;
+            width: 24px;
+        }
+
+        .section-header .chevron {
+            margin-left: auto;
+            transition: transform 0.2s;
+        }
+
+        .section-body {
+            padding: 1.2rem;
+            display: block;
+        }
+
+        .section-body.collapsed {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+            color: #2c3e4e;
+        }
+
+        .points-badge {
+            background: #eef2f9;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            background: white;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #2c7da0;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        }
+
+        .valid-field {
+            border-color: #2ecc71;
+            background-color: #f0fff4;
+        }
+
+        .invalid-field {
+            border-color: #e74c3c;
+            background-color: #fff8f7;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .btn {
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: #1f6e8c; color: white; }
+        .btn-primary:hover { background: #0e5a74; transform: translateY(-2px);}
+        .btn-success { background: #2c7a4d; color: white; }
+        .btn-success:hover { background: #1f613c; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-warning:hover { background: #d35400; }
+        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #2c3e50; }
+        .btn-outline:hover { background: #f1f5f9; }
+        .btn-info { background: #3b82f6; color: white; }
+
+        .score-card {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            border: 1px solid #e9edf2;
+        }
+
+        .total-score {
+            background: linear-gradient(135deg, #1f6e8c, #0f4c64);
+            color: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .preview-article {
+            background: #fef7e8;
+            border-radius: 1rem;
+            padding: 1rem;
+            font-size: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ffe6c2;
+        }
+
+        hr {
+            margin: 0.8rem 0;
+            border-color: #eef2f8;
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 1.5rem;
+            color: #2c5a6e;
+            border-top: 1px solid #d4e2ec;
+            background: #f4f9fe;
+            border-radius: 1rem;
+        }
+
+        footer a {
+            color: #1f6e8c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard {
+                flex-direction: column;
+            }
+            .hero p {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="hero">
+        <h1><i class="fas fa-scroll"></i> Q1 Article Architect <span style="background:#ffb347; font-size:1rem; padding:0.2rem 0.8rem; border-radius:30px;">Pro + Reviewer</span></h1>
+        <p>Rancang artikel ilmiah standar Q1 secara interaktif. Dapatkan skor kelayakan, unduh PDF, dan kirimkan ke reviewer. Reviewer bisa mengimpor data, memberi catatan, lalu mengirimkan kembali hasil review via WhatsApp atau file JSON.</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- FORM PANEL -->
+        <div class="form-panel" id="formPanel">
+            <!-- Metadata & Penulis -->
+            <div class="section-card">
+                <div class="section-header" data-section="meta">
+                    <i class="fas fa-info-circle"></i> Metadata & Penulis
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="section-body" id="meta-body">
+                    <div class="form-group"><label>Judul Artikel <span class="points-badge">5 poin</span></label><input type="text" id="title" placeholder="Judul spesifik dan menarik"></div>
+                    <div class="form-group"><label>Nama Penulis (utama & kontributor) <span class="points-badge">3 poin</span></label><input type="text" id="authors" placeholder="Contoh: Budi Santoso¹, Siti Nurhaliza²"></div>
+                    <div class="form-group"><label>Afiliasi & Email Korespondensi <span class="points-badge">2 poin</span></label><input type="text" id="affiliation" placeholder="Universitas / Institusi, email: author@domain.com"></div>
+                    <div class="form-group"><label>Target Audiens / Jurnal <span class="points-badge">3 poin</span></label><input type="text" id="audience" placeholder="Jurnal Q1 di bidang ..."></div>
+                    <div class="form-group"><label>Kata Kunci (3-5 kata) <span class="points-badge">3 poin</span></label><input type="text" id="keywords" placeholder="separated by commas"></div>
+                </div>
+            </div>
+
+            <!-- Abstrak -->
+            <div class="section-card">
+                <div class="section-header" data-section="abstract"><i class="fas fa-paragraph"></i> Abstrak <i class="fas fa-chevron-down chevron"></i></div>
+                <div class="section-body"><textarea id="abstract" rows="4" placeholder="Latar, tujuan, metode, hasil, implikasi (min 100 karakter)"></textarea></div>
+            </div>
+
+            <!-- Pendahuluan -->
+            <div class="section-card"><div class="section-header" data-section="intro"><i class="fas fa-book-open"></i> Pendahuluan <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body"><textarea id="introduction" rows="4" placeholder="Latar belakang, gap penelitian, tujuan studi (min 80 karakter)"></textarea></div></div>
+
+            <!-- Metode -->
+            <div class="section-card"><div class="section-header" data-section="method"><i class="fas fa-flask"></i> Metode Penelitian <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body">
+                <div class="form-group"><label>Jenis Metode</label><select id="methodType"><option value="">Pilih metode utama</option><option value="Kuantitatif">Kuantitatif</option><option value="Kualitatif">Kualitatif</option><option value="Mixed Methods">Mixed Methods</option><option value="Studi Literatur">Studi Literatur</option><option value="Eksperimental">Eksperimental</option></select></div>
+                <div class="form-group"><label>Deskripsi Metode (populasi, instrumen, analisis) <span class="points-badge">8 poin</span> <span class="helper-text">Min 60 karakter</span></label><textarea id="methodDesc" rows="4" placeholder="Detail metode ..."></textarea></div>
+            </div></div>
+
+            <!-- Hasil -->
+            <div class="section-card"><div class="section-header" data-section="results"><i class="fas fa-chart-bar"></i> Hasil (Results) <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body"><textarea id="results" rows="5" placeholder="Temuan utama, data, statistik (min 70 karakter)"></textarea></div></div>
+
+            <!-- Pembahasan -->
+            <div class="section-card"><div class="section-header" data-section="discussion"><i class="fas fa-comments"></i> Pembahasan (Discussion) <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body"><textarea id="discussion" rows="5" placeholder="Interpretasi, perbandingan, keterbatasan (min 70 karakter)"></textarea></div></div>
+
+            <!-- Poin Utama -->
+            <div class="section-card"><div class="section-header" data-section="points"><i class="fas fa-list-ul"></i> Argumen Utama (opsional) <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body">
+                <div class="form-group"><label>Poin Utama 1 <span class="points-badge">3 poin</span></label><textarea id="point1" rows="2"></textarea></div>
+                <div class="form-group"><label>Poin Utama 2 <span class="points-badge">3 poin</span></label><textarea id="point2" rows="2"></textarea></div>
+                <div class="form-group"><label>Poin Utama 3 <span class="points-badge">3 poin</span></label><textarea id="point3" rows="2"></textarea></div>
+            </div></div>
+
+            <!-- Kesimpulan -->
+            <div class="section-card"><div class="section-header" data-section="conclusion"><i class="fas fa-check-double"></i> Kesimpulan <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body"><textarea id="conclusion" rows="3" placeholder="Simpulan, saran, kontribusi (min 40 karakter)"></textarea></div></div>
+
+            <!-- Komponen etika & pelengkap -->
+            <div class="section-card"><div class="section-header" data-section="supp"><i class="fas fa-hand-sparkles"></i> Etika & Pelengkap <i class="fas fa-chevron-down chevron"></i></div>
+            <div class="section-body">
+                <div class="form-group"><label>Author Contribution <span class="points-badge">4 poin</span></label><textarea id="authorContrib" rows="2" placeholder="CRediT: konseptualisasi, metodologi, analisis..."></textarea></div>
+                <div class="form-group"><label>Acknowledgement <span class="points-badge">2 poin</span></label><textarea id="acknowledge" rows="2" placeholder="Ucapan terima kasih"></textarea></div>
+                <div class="form-group"><label>Funding (Pendanaan) <span class="points-badge">2 poin</span></label><textarea id="funding" rows="2" placeholder="Sebutkan hibah atau 'none'"></textarea></div>
+                <div class="form-group"><label>Conflict of Interest <span class="points-badge">2 poin</span></label><textarea id="conflict" rows="2" placeholder="Tidak ada konflik kepentingan"></textarea></div>
+            </div></div>
+
+            <!-- Reviewer Collaboration Section -->
+            <div class="section-card">
+                <div class="section-header" data-section="reviewer">
+                    <i class="fas fa-users"></i> Reviewer Collaboration
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="section-body" id="reviewer-body">
+                    <div class="form-group">
+                        <label>Catatan Reviewer / Feedback</label>
+                        <textarea id="reviewerNotes" rows="4" placeholder="Reviewer dapat menulis komentar, saran revisi, dan nilai akhir di sini..."></textarea>
+                    </div>
+                    <div class="btn-group" style="margin-top:0.5rem;">
+                        <button id="exportDataBtn" class="btn btn-outline"><i class="fas fa-download"></i> Ekspor Data Artikel (JSON)</button>
+                        <button id="importDataBtn" class="btn btn-outline"><i class="fas fa-upload"></i> Impor Data Artikel (JSON)</button>
+                    </div>
+                    <div class="btn-group">
+                        <button id="sendReviewWA" class="btn btn-warning"><i class="fab fa-whatsapp"></i> Kirim Review via WA</button>
+                        <button id="generateReviewPDF" class="btn btn-info"><i class="fas fa-file-pdf"></i> PDF + Review</button>
+                    </div>
+                    <div style="font-size:0.7rem; margin-top:0.5rem; background:#eef2fa; padding:0.5rem; border-radius:0.8rem;">
+                        <i class="fas fa-info-circle"></i> <strong>Cara kerja:</strong> Penulis → Ekspor JSON → Kirim ke reviewer. Reviewer → Impor JSON → Beri catatan → Kirim balik JSON atau PDF via WA.
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="validateBtn" class="btn btn-primary"><i class="fas fa-check-circle"></i> Validasi & Hitung Poin</button>
+                <button id="resetBtn" class="btn btn-outline"><i class="fas fa-trash-alt"></i> Reset</button>
+                <button id="pdfBtn" class="btn btn-success"><i class="fas fa-file-pdf"></i> Unduh PDF (Tanpa Review)</button>
+            </div>
+        </div>
+
+        <!-- PANEL REVIEW & SCORE -->
+        <div class="review-panel">
+            <div class="total-score" id="totalScoreBox">
+                <i class="fas fa-star-of-life"></i> <strong>Skor Kelayakan Artikel</strong>
+                <div class="score-number" id="totalPoints">0</div>
+                <div>Maksimal 100 poin</div>
+            </div>
+            <div class="score-card">
+                <div style="font-weight:700; margin-bottom:10px;"><i class="fas fa-clipboard-list"></i> Rincian Penilaian</div>
+                <div id="scoreDetails" style="max-height: 300px; overflow-y: auto; font-size:0.8rem;"></div>
+            </div>
+            <div class="preview-article" id="previewContent">
+                <h4><i class="fas fa-eye"></i> Pratinjau Singkat</h4>
+                <div id="previewText">Klik validasi atau isi form untuk melihat ringkasan.</div>
+            </div>
+            <button id="copyPreviewBtn" class="btn btn-outline" style="width:100%;"><i class="fas fa-copy"></i> Salin Pratinjau ke Clipboard</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>Product by <strong>CV. Simpul Project Academy</strong> | Kunjungi <a href="https://www.simpulacademy.com" target="_blank">www.simpulacademy.com</a> &nbsp;|&nbsp; Kerjasama dengan <a href="https://www.akademiksolusibna.online" target="_blank">www.akademiksolusibna.online</a></p>
+    <p style="margin-top:0.5rem; font-size:0.7rem;">© 2025 Q1 Article Builder - Solusi penyusunan artikel ilmiah terintegrasi</p>
+</footer>
+
+<script>
+    // DOM elements
+    const fields = {
+        title: document.getElementById('title'), authors: document.getElementById('authors'), affiliation: document.getElementById('affiliation'),
+        audience: document.getElementById('audience'), keywords: document.getElementById('keywords'), abstract: document.getElementById('abstract'),
+        introduction: document.getElementById('introduction'), methodType: document.getElementById('methodType'), methodDesc: document.getElementById('methodDesc'),
+        results: document.getElementById('results'), discussion: document.getElementById('discussion'), point1: document.getElementById('point1'),
+        point2: document.getElementById('point2'), point3: document.getElementById('point3'), conclusion: document.getElementById('conclusion'),
+        authorContrib: document.getElementById('authorContrib'), acknowledge: document.getElementById('acknowledge'),
+        funding: document.getElementById('funding'), conflict: document.getElementById('conflict'), reviewerNotes: document.getElementById('reviewerNotes')
+    };
+
+    // Kriteria penilaian (total 100)
+    const criteria = [
+        { id:'title', name:'Judul', max:5, get:()=>fields.title.value.trim(), valid:(v)=>v!=='' },
+        { id:'authors', name:'Penulis', max:3, get:()=>fields.authors.value.trim(), valid:(v)=>v!=='' },
+        { id:'affiliation', name:'Afiliasi/Email', max:2, get:()=>fields.affiliation.value.trim(), valid:(v)=>v!=='' },
+        { id:'audience', name:'Target Audiens', max:3, get:()=>fields.audience.value.trim(), valid:(v)=>v!=='' },
+        { id:'keywords', name:'Kata Kunci', max:3, get:()=>fields.keywords.value.trim(), valid:(v)=>v!=='' },
+        { id:'abstract', name:'Abstrak', max:10, get:()=>fields.abstract.value.trim(), valid:(v)=>v.length>=100 },
+        { id:'introduction', name:'Pendahuluan', max:8, get:()=>fields.introduction.value.trim(), valid:(v)=>v.length>=80 },
+        { id:'method', name:'Metode (jenis+deskripsi)', max:8, get:()=>{return {type:fields.methodType.value, desc:fields.methodDesc.value.trim()};}, valid:(obj)=>obj.type!=='' && obj.desc.length>=60 },
+        { id:'results', name:'Hasil (Results)', max:10, get:()=>fields.results.value.trim(), valid:(v)=>v.length>=70 },
+        { id:'discussion', name:'Pembahasan', max:10, get:()=>fields.discussion.value.trim(), valid:(v)=>v.length>=70 },
+        { id:'point1', name:'Poin Utama 1', max:3, get:()=>fields.point1.value.trim(), valid:(v)=>v.length>=20 },
+        { id:'point2', name:'Poin Utama 2', max:3, get:()=>fields.point2.value.trim(), valid:(v)=>v.length>=20 },
+        { id:'point3', name:'Poin Utama 3', max:3, get:()=>fields.point3.value.trim(), valid:(v)=>v.length>=20 },
+        { id:'conclusion', name:'Kesimpulan', max:6, get:()=>fields.conclusion.value.trim(), valid:(v)=>v.length>=40 },
+        { id:'authorContrib', name:'Author Contribution', max:4, get:()=>fields.authorContrib.value.trim(), valid:(v)=>v!=='' },
+        { id:'acknowledge', name:'Acknowledgement', max:2, get:()=>fields.acknowledge.value.trim(), valid:(v)=>v!=='' },
+        { id:'funding', name:'Funding', max:2, get:()=>fields.funding.value.trim(), valid:(v)=>v!=='' },
+        { id:'conflict', name:'Conflict of Interest', max:2, get:()=>fields.conflict.value.trim(), valid:(v)=>v!=='' }
+    ];
+
+    function calculateScore() {
+        let total = 0;
+        let details = [];
+        for (let c of criteria) {
+            let val = c.get();
+            let valid = false;
+            if (c.id === 'method') valid = c.valid(val);
+            else valid = c.valid(val);
+            let earned = valid ? c.max : 0;
+            total += earned;
+            details.push({ name: c.name, earned, max: c.max, valid });
+        }
+        return { total, details };
+    }
+
+    function updateUI() {
+        const { total, details } = calculateScore();
+        document.getElementById('totalPoints').innerText = total;
+        let detailsHtml = '';
+        details.forEach(d => {
+            const status = d.valid ? '✅' : '❌';
+            detailsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eef2f5; padding:5px 0;"><span>${status} ${d.name}</span><span>${d.earned}/${d.max}</span></div>`;
+        });
+        document.getElementById('scoreDetails').innerHTML = detailsHtml || '<div>Lengkapi form untuk penilaian</div>';
+        
+        let preview = `📌 Judul: ${fields.title.value || '-'}\n✍️ Penulis: ${fields.authors.value || '-'}\n📄 Abstrak: ${(fields.abstract.value || '').substring(0,120)}...\n🔬 Metode: ${fields.methodType.value || '-'}\n📊 Hasil: ${(fields.results.value || '').substring(0,80)}...\n💬 Diskusi: ${(fields.discussion.value || '').substring(0,80)}...\n📝 Kesimpulan: ${(fields.conclusion.value || '').substring(0,60)}...\n⭐ Skor: ${total}/100\n📝 Catatan Reviewer: ${(fields.reviewerNotes.value || '').substring(0,80)}...`;
+        document.getElementById('previewText').innerText = preview;
+        return { total, details };
+    }
+
+    function styleFields() {
+        for (let c of criteria) {
+            let element = null;
+            if (c.id === 'method') {
+                const typeEl = fields.methodType;
+                const descEl = fields.methodDesc;
+                const valid = c.valid({type: typeEl.value, desc: fields.methodDesc.value.trim()});
+                typeEl.classList.remove('valid-field','invalid-field');
+                descEl.classList.remove('valid-field','invalid-field');
+                if (valid) { typeEl.classList.add('valid-field'); descEl.classList.add('valid-field'); }
+                else { typeEl.classList.add('invalid-field'); descEl.classList.add('invalid-field'); }
+                continue;
+            }
+            const fieldMap = { title:'title', authors:'authors', affiliation:'affiliation', audience:'audience', keywords:'keywords', abstract:'abstract', introduction:'introduction', results:'results', discussion:'discussion', point1:'point1', point2:'point2', point3:'point3', conclusion:'conclusion', authorContrib:'authorContrib', acknowledge:'acknowledge', funding:'funding', conflict:'conflict' };
+            if (fieldMap[c.id]) {
+                element = fields[fieldMap[c.id]];
+                if (element) {
+                    let val = element.value.trim();
+                    let valid = c.valid(val);
+                    element.classList.remove('valid-field','invalid-field');
+                    if (valid) element.classList.add('valid-field');
+                    else element.classList.add('invalid-field');
+                }
+            }
+        }
+    }
+
+    function saveToLocal() {
+        const data = {};
+        for (let key in fields) {
+            if (fields[key]) data[key] = fields[key].value;
+        }
+        localStorage.setItem('q1_article_data', JSON.stringify(data));
+    }
+
+    function loadFromLocal() {
+        const raw = localStorage.getItem('q1_article_data');
+        if (raw) {
+            try {
+                const data = JSON.parse(raw);
+                for (let key in data) {
+                    if (fields[key]) fields[key].value = data[key];
+                }
+                updateUI(); styleFields();
+            } catch(e) {}
+        }
+    }
+
+    function resetForm() {
+        for (let key in fields) if (fields[key]) fields[key].value = '';
+        fields.methodType.value = '';
+        updateUI(); styleFields(); saveToLocal();
+    }
+
+    // Export all data (including reviewer notes) to JSON
+    function exportData() {
+        const allData = {};
+        for (let key in fields) {
+            if (fields[key]) allData[key] = fields[key].value;
+        }
+        const { total, details } = calculateScore();
+        allData._score = total;
+        allData._details = details;
+        const dataStr = JSON.stringify(allData, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `article_data_${new Date().toISOString().slice(0,19)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // Import data from JSON file (reviewer can import author's data)
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    for (let key in imported) {
+                        if (fields[key] && key !== '_score' && key !== '_details') {
+                            fields[key].value = imported[key];
+                        }
+                    }
+                    updateUI(); styleFields(); saveToLocal();
+                    alert('Data artikel berhasil diimpor! (termasuk catatan reviewer jika ada)');
+                } catch(err) {
+                    alert('File JSON tidak valid');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    // Generate PDF with reviewer notes
+    async function generateReviewPDF() {
+        const { total } = calculateScore();
+        const previewDiv = document.createElement('div');
+        previewDiv.style.padding = '20px';
+        previewDiv.style.fontFamily = 'Times New Roman, serif';
+        previewDiv.style.backgroundColor = 'white';
+        previewDiv.style.width = '800px';
+        previewDiv.innerHTML = `
+            <h1 style="text-align:center;">${fields.title.value || 'Judul Artikel'}</h1>
+            <p style="text-align:center;"><strong>${fields.authors.value || 'Penulis'}</strong><br>${fields.affiliation.value || ''}</p>
+            <hr>
+            <h3>Abstrak</h3><p>${fields.abstract.value || '-'}</p>
+            <h3>Pendahuluan</h3><p>${fields.introduction.value || '-'}</p>
+            <h3>Metode</h3><p><strong>${fields.methodType.value || 'Metode'}</strong><br>${fields.methodDesc.value || '-'}</p>
+            <h3>Hasil</h3><p>${fields.results.value || '-'}</p>
+            <h3>Pembahasan</h3><p>${fields.discussion.value || '-'}</p>
+            <h3>Kesimpulan</h3><p>${fields.conclusion.value || '-'}</p>
+            <h3>Kontribusi Penulis</h3><p>${fields.authorContrib.value || '-'}</p>
+            <h3>Ucapan Terima Kasih</h3><p>${fields.acknowledge.value || '-'}</p>
+            <h3>Pendanaan</h3><p>${fields.funding.value || '-'}</p>
+            <h3>Konflik Kepentingan</h3><p>${fields.conflict.value || '-'}</p>
+            <div style="background:#f0f7ff; padding:10px; margin-top:20px; border-left:5px solid #ffb347;">
+                <h3>📝 REVIEWER FEEDBACK</h3>
+                <p>${fields.reviewerNotes.value || 'Tidak ada catatan reviewer.'}</p>
+                <p><strong>Skor Akhir Artikel: ${total}/100</strong></p>
+            </div>
+            <p style="margin-top:20px;"><em>Dokumen ini dihasilkan dari Q1 Article Builder Pro. Reviewer: ${fields.reviewerNotes.value ? 'Telah memberikan catatan' : 'Belum ada catatan'}</em></p>
+        `;
+        document.body.appendChild(previewDiv);
+        try {
+            const canvas = await html2canvas(previewDiv, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 190;
+            const pageHeight = 277;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            pdf.save(`review_article_${new Date().toISOString().slice(0,19)}.pdf`);
+        } catch(err) { alert('Gagal generate PDF: '+err); }
+        document.body.removeChild(previewDiv);
+    }
+
+    async function generatePDF() {
+        const previewDiv = document.createElement('div');
+        previewDiv.style.padding = '20px';
+        previewDiv.style.fontFamily = 'Times New Roman, serif';
+        previewDiv.style.backgroundColor = 'white';
+        previewDiv.style.width = '800px';
+        previewDiv.innerHTML = `
+            <h1 style="text-align:center;">${fields.title.value || 'Judul Artikel'}</h1>
+            <p style="text-align:center;"><strong>${fields.authors.value || 'Penulis'}</strong><br>${fields.affiliation.value || ''}</p>
+            <hr>
+            <h3>Abstrak</h3><p>${fields.abstract.value || '-'}</p>
+            <h3>Pendahuluan</h3><p>${fields.introduction.value || '-'}</p>
+            <h3>Metode</h3><p><strong>${fields.methodType.value || 'Metode'}</strong><br>${fields.methodDesc.value || '-'}</p>
+            <h3>Hasil</h3><p>${fields.results.value || '-'}</p>
+            <h3>Pembahasan</h3><p>${fields.discussion.value || '-'}</p>
+            <h3>Kesimpulan</h3><p>${fields.conclusion.value || '-'}</p>
+            <h3>Kontribusi Penulis</h3><p>${fields.authorContrib.value || '-'}</p>
+            <h3>Ucapan Terima Kasih</h3><p>${fields.acknowledge.value || '-'}</p>
+            <h3>Pendanaan</h3><p>${fields.funding.value || '-'}</p>
+            <h3>Konflik Kepentingan</h3><p>${fields.conflict.value || '-'}</p>
+            <p><em>Artikel disusun menggunakan Q1 Article Builder. Skor kelayakan: ${calculateScore().total}/100</em></p>
+        `;
+        document.body.appendChild(previewDiv);
+        try {
+            const canvas = await html2canvas(previewDiv, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 190;
+            const pageHeight = 277;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            pdf.save(`article_${new Date().toISOString().slice(0,19)}.pdf`);
+        } catch(err) { alert('Gagal generate PDF: '+err); }
+        document.body.removeChild(previewDiv);
+    }
+
+    function shareReviewWA() {
+        const { total } = calculateScore();
+        const notes = fields.reviewerNotes.value.trim() || '(Belum ada catatan)';
+        const message = `📑 *HASIL REVIEW ARTIKEL Q1* \n\nJudul: ${fields.title.value || '-'}\nPenulis: ${fields.authors.value || '-'}\nSkor Akhir: ${total}/100\n\n✍️ *Catatan Reviewer:*\n${notes}\n\n---\nDokumen lengkap dapat diunduh sebagai PDF dari aplikasi Q1 Article Builder.`;
+        const encoded = encodeURIComponent(message);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    // Event binding
+    document.getElementById('validateBtn').addEventListener('click', () => { updateUI(); styleFields(); saveToLocal(); alert('Validasi selesai. Skor diperbarui.'); });
+    document.getElementById('resetBtn').addEventListener('click', () => { resetForm(); alert('Form direset'); });
+    document.getElementById('pdfBtn').addEventListener('click', () => generatePDF());
+    document.getElementById('exportDataBtn').addEventListener('click', () => exportData());
+    document.getElementById('importDataBtn').addEventListener('click', () => importData());
+    document.getElementById('sendReviewWA').addEventListener('click', () => shareReviewWA());
+    document.getElementById('generateReviewPDF').addEventListener('click', () => generateReviewPDF());
+    document.getElementById('copyPreviewBtn').addEventListener('click', () => {
+        const previewText = document.getElementById('previewText').innerText;
+        navigator.clipboard.writeText(previewText);
+        alert('Pratinjau disalin ke clipboard!');
+    });
+
+    // Accordion
+    document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const body = header.nextElementSibling;
+            if (body && body.classList.contains('section-body')) {
+                body.classList.toggle('collapsed');
+                const chevron = header.querySelector('.chevron');
+                if (chevron) chevron.classList.toggle('fa-chevron-down');
+                if (chevron) chevron.classList.toggle('fa-chevron-up');
+            }
+        });
+    });
+
+    // Auto-save
+    for (let key in fields) {
+        if (fields[key]) fields[key].addEventListener('input', () => { saveToLocal(); updateUI(); styleFields(); });
+    }
+    loadFromLocal();
+    updateUI(); styleFields();
+</script>
+</body>
+</html>
